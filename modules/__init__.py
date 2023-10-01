@@ -126,7 +126,7 @@ class OCR:
         config = Config(config_path)
         ocr_config = ocr.Config.load_config_from_name(config.model_name)
         ocr_config['cnn']['pretrained']=False
-        ocr_config['device'] = 'cuda:0'
+        ocr_config['device'] = 'cpu'
         ocr_config['predictor']['beamsearch']=False
 
         self.model_name = model_name
