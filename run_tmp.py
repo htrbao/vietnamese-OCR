@@ -2,25 +2,17 @@ import os
 import cv2
 import argparse
 import torch
-import json
 import numpy as np
 import pandas as pd
 from PIL import Image
-import re
-from tqdm import tqdm
-import glob
 import matplotlib.pyplot as plt
 import matplotlib
-from google.cloud import storage
-from concurrent import futures
 from modules import Preprocess, Detection, OCR, Retrieval, Correction
 from tool.config import Config 
 from tool.utils import natural_keys, visualize, find_highest_score_each_class
 import time
 
 parser = argparse.ArgumentParser("Document Extraction")
-parser.add_argument('--L', type=str, help='List of Video')
-parser.add_argument('--V', type=str, default='', help='Video Index')
 parser.add_argument("--input", help="Path to single image to be scanned")
 parser.add_argument("--output", default="./results", help="Path to output folder")
 parser.add_argument("--debug", action="store_true", help="Save every steps for debugging")
@@ -28,31 +20,6 @@ parser.add_argument("--do_retrieve", action="store_true", help="Whether to retri
 parser.add_argument("--find_best_rotation", action="store_true", help="Whether to find rotation of document in the image")
 args = parser.parse_args()
 
-def download_public_file(bucket_name, source_blob_name, destination_file_name):
-    """Downloads a public blob from the bucket."""
-
-    storage_client = storage.Client.create_anonymous_client()
-
-    bucket = storage_client.bucket(bucket_name)
-    blob = bucket.blob(source_blob_name)
-    blob.download_to_filename(destination_file_name)
-
-    print(
-        "Downloaded public blob {} from bucket {} to {}.".format(
-            source_blob_name, bucket.name, destination_file_name
-        )
-    )
-
-
-def list_blobs(bucket_name, folder):
-    """Lists all the blobs in the bucket."""
-
-    children = []
-    storage_client = storage.Client.create_anonymous_client()
-    blobs = storage_client.list_blobs(bucket_name, prefix=folder)
-    for blob in blobs: 
-        children.append(blob.name)
-    return children
 
 class Pipeline:
     def __init__(self, args, config):
@@ -145,9 +112,6 @@ class Pipeline:
         
         texts = self.ocr_model.predict_folder(img_paths, return_probs=False)
         texts = self.correction(texts, return_score=False)
-
-        return texts
-        print(texts)
         
         if self.do_retrieve:
             preds, probs = self.retrieval(texts)
@@ -170,43 +134,11 @@ class Pipeline:
 
 if __name__ == '__main__':
     config = Config('./tool/config/configs.yaml')
+    print(args.do_retrieve)
     pipeline = Pipeline(args, config)
+    img = cv2.imread(args.input)
+    start_time = time.time()
+    pipeline.start(img)
+    end_time = time.time()
 
-    paths = "../TransNet_Database"
-    
-    video_paths = sorted(glob.glob(f"{paths}/Keyframes_L{args.L}/*/"))
-    video_paths = ['/'.join(i.split('/')[:-1]) for i in video_paths]
-
-    ocr_video = {}
-
-    # os.makedirs(des_path, exist_ok=True)
-
-    for vd_path in video_paths:
-        #vd, fr = vd_path.split('/')[-1].split('_')
-        # if int(vd[1:]) == 19 and int(fr[1:]) < 46:
-        #     continue 
-        print(vd_path)
-        # check_file = int(vd_path.split('/')[-1].replace('C02_V',''))
-        # if check_file <= 349:
-        #   print(f"Skip: {vd_path}")
-        #   continue
-
-        re_feats = []
-        keyframe_paths = glob.glob(f'{vd_path}/*.jpg')
-        keyframe_paths = sorted(keyframe_paths, key=lambda x : x.split('/')[-1].replace('.jpg',''))
-
-        for keyframe_path in tqdm(keyframe_paths):
-
-            start_time = time.time()
-            img = cv2.imread(keyframe_path)
-            ocr_video[keyframe_path.split('/')[-1].split('.')[0]] = pipeline.start(img)
-            end_time = time.time()
-
-            print(f"Executed {keyframe_path} in {end_time - start_time} s")
-
-        json_ocr = json.dumps(ocr_video)
-        with open("./%s.json"%(vd_path), "w") as outfile:
-            outfile.write(json_ocr)
-
-
-
+    print(f"Executed in {end_time - start_time} s")
