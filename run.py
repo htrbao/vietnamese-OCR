@@ -177,11 +177,10 @@ if __name__ == '__main__':
     video_paths = sorted(glob.glob(f"{paths}/Keyframes_L{args.L}/*/"))
     video_paths = ['/'.join(i.split('/')[:-1]) for i in video_paths]
 
-    ocr_video = {}
-
     # os.makedirs(des_path, exist_ok=True)
 
     for vd_path in video_paths:
+        ocr_video = {}
         #vd, fr = vd_path.split('/')[-1].split('_')
         # if int(vd[1:]) == 19 and int(fr[1:]) < 46:
         #     continue 
