@@ -173,7 +173,11 @@ if __name__ == '__main__':
     pipeline = Pipeline(args, config)
 
     paths = "../TransNet_Database"
+    out_path = "../REOCR"
     
+    if not os.path.isdir(out_path):
+        os.makedirs(out_path, exist_ok=True)
+
     video_paths = sorted(glob.glob(f"{paths}/Keyframes_L{args.L}/*/"))
     video_paths = ['/'.join(i.split('/')[:-1]) for i in video_paths]
 
@@ -204,7 +208,7 @@ if __name__ == '__main__':
             print(f"Executed {keyframe_path} in {end_time - start_time} s")
 
         json_ocr = json.dumps(ocr_video)
-        with open("./%s.json"%(vd_path), "w") as outfile:
+        with open("%s.json"%(out_path), "w") as outfile:
             outfile.write(json_ocr)
 
 
