@@ -9,10 +9,6 @@ from PIL import Image
 import re
 from tqdm import tqdm
 import glob
-import matplotlib.pyplot as plt
-import matplotlib
-from google.cloud import storage
-from concurrent import futures
 from modules import Preprocess, Detection, OCR, Retrieval, Correction
 from tool.config import Config 
 from tool.utils import natural_keys, visualize, find_highest_score_each_class
@@ -201,14 +197,15 @@ if __name__ == '__main__':
         for keyframe_path in tqdm(keyframe_paths):
 
             start_time = time.time()
-            img = cv2.imread(keyframe_path)
+            img = cv2.imread(keyframe_path)[:650,:,:]
             ocr_video[keyframe_path.split('/')[-1].split('.')[0]] = pipeline.start(img)
             end_time = time.time()
 
             print(f"Executed {keyframe_path} in {end_time - start_time} s")
+            break
 
         json_ocr = json.dumps(ocr_video)
-        with open("%s.json"%(out_path), "w") as outfile:
+        with open("%s/%s.json"%(out_path, vd_path.split('/')[-1]), "w") as outfile:
             outfile.write(json_ocr)
 
 
