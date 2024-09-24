@@ -202,7 +202,6 @@ if __name__ == '__main__':
             end_time = time.time()
 
             print(f"Executed {keyframe_path} in {end_time - start_time} s")
-            break
 
         json_ocr = json.dumps(ocr_video)
         with open("%s/%s.json"%(out_path, vd_path.split('/')[-1]), "w") as outfile:
